@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입 페이지</title>
+    <style>
+        body{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<h1>회원가입 페이지</h1>
+<hr/>
+<form action="/join" method="POST">
+    <input type="text" name="username" placeholder="Username">
+    <br/>
+    <input type="email" name="email" placeholder="E-mail">
+    <br/>
+    <input type="password" name="password" placeholder="Password">
+    <br/>
+    <button type="submit">회원가입</button>
+</form>
+<p></p>
+<a href="/loginForm">이미 아이디가 있으신가요?</a>
+</body>
+</html>
