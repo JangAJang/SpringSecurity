@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8090
   servlet:
     context-path: /
     encoding:
@@ -16,7 +16,18 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create #create update none
+      ddl-auto: update #create update none
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 334003748290-bsqv2a1rns2gbfpcu716g2o5ar8hom91.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+            - email
+            - profile
+
