@@ -1,5 +1,7 @@
 package com.cos.jwt.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.cos.jwt.auth.PrincipalDetails;
 import com.cos.jwt.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 
 //스프링 시큐리티에서 UsernamePasswordAuthenticationFilter를 가져와 확장시킨다.
 // /login 요청해서 username, password을 post로 전송하면 UsernamePasswordAuthenticationFilter가 동작한다.
@@ -38,6 +41,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             while((input=br.readLine())!=null){
                 System.out.println(input);
             }*/
+
             ObjectMapper om = new ObjectMapper();
             User user = om.readValue(request.getInputStream(), User.class);
             System.out.println(user);
@@ -54,10 +58,24 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         }
     }
 
+
+    //attemptAuthentification이 정상수행 되면 아래 함수 실행. JWT 토큰을 만들어서 요청한 사용자에게 response한다.
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult)
+    protected void successfulAuthentication(HttpServletRequest request,
+                                            HttpServletResponse response, FilterChain chain, Authentication authResult)
             throws IOException, ServletException {
         System.out.println("successfulAuthentication 실행됨 : 인증이 완료되었다는 뜻임");
-        super.successfulAuthentication(request, response, chain, authResult);
+        PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
+
+
+        //HMAC(해쉬 암호방식) = server만 알고있는 secret값을 가지고 전자서명 사용.
+        String jwtToken = JWT.create()
+                .withSubject("cos토큰")
+                .withExpiresAt(new Date(System.currentTimeMillis() + (60000*10))) // 현재시간 + 만료시간
+                .withClaim("id", principalDetails.getUser().getId())
+                .withClaim("username", principalDetails.getUser().getUsername())
+                .sign(Algorithm.HMAC512("cos"));
+
+        response.addHeader("Authorization", "Baerer "+jwtToken);
     }
 }

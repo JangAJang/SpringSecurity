@@ -27,14 +27,11 @@ public class RestApiController {
         return "<h1>token<h1>";
     }
 
-    @GetMapping("joinForm")
-    public String joinForm(){
-        return "joinForm";
-    }
-
     @PostMapping("join")
     @ResponseBody
-    public String join(User user){
+    public String join(User user, String username, String password){
+        System.out.println(user.getUsername());
+        System.out.println(user.getPassword());
         user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         user.setRoles("ROLE_USER");
         userRepository.save(user);
