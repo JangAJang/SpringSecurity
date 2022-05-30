@@ -9,7 +9,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -30,27 +29,23 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         this.userRepository = userRepository;
     }
 
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, AuthenticationEntryPoint authenticationEntryPoint) {
-        super(authenticationManager, authenticationEntryPoint);
-    }
-
-
     //인증이나 권한이 필요한 주소요청이 있을 때 해당 필터를 타게 된다.
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        super.doFilterInternal(request, response, chain);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
         System.out.println("인증이나 권한이 필요한 주소 요청이 됨");
-
-        String jwtHeader = request.getHeader("Authorization");
+        String jwtHeader = request.getHeader(JwtProperties.HEADER_STRING);
         System.out.println("jwtHeader : " + jwtHeader);
 
         //header있는지 확인
-        if(jwtHeader == null || !jwtHeader.startsWith("Bearer")){
+        if(jwtHeader == null || !jwtHeader.startsWith(JwtProperties.TOKEN_PREFIX)){
+            System.out.println("jwtHeader : " + jwtHeader);
             chain.doFilter(request, response);
             return;
         }
-        String jwtToken = request.getHeader("Authorization").replace("Bearer ", "");
-        String username = JWT.require(Algorithm.HMAC512("cos")).build().verify(jwtToken).getClaim("username").asString();
+        String jwtToken = request.getHeader(JwtProperties.HEADER_STRING).replace(JwtProperties.TOKEN_PREFIX, "");
+        String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(jwtToken).getClaim("username").asString();
+
         //서명이 정상적으로 진행
         if(username != null){
             User userEntity = userRepository.findByUsername(username);

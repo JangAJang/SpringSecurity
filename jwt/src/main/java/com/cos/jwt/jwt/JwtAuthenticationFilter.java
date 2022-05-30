@@ -71,11 +71,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         //HMAC(해쉬 암호방식) = server만 알고있는 secret값을 가지고 전자서명 사용.
         String jwtToken = JWT.create()
                 .withSubject("cos토큰")
-                .withExpiresAt(new Date(System.currentTimeMillis() + (60000*10))) // 현재시간 + 만료시간
+                .withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME)) // 현재시간 + 만료시간
                 .withClaim("id", principalDetails.getUser().getId())
                 .withClaim("username", principalDetails.getUser().getUsername())
-                .sign(Algorithm.HMAC512("cos"));
+                .sign(Algorithm.HMAC512(JwtProperties.SECRET));
 
-        response.addHeader("Authorization", "Baerer "+jwtToken);
+        response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX+jwtToken);
     }
 }
