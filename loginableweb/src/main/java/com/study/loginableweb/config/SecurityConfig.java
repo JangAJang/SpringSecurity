@@ -11,10 +11,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.filter.CorsFilter;
 
-import javax.persistence.Basic;
-
-import static org.hibernate.criterion.Restrictions.and;
-
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
