@@ -3,20 +3,20 @@ server:
   servlet:
     context-path: /
     encoding:
-      charset: UTF-8
       enabled: true
+      charset: UTF-8
       force: true
 
 spring:
   datasource:
-    password: cos1234
-    username: cos
     driver-class-name: com.mysql.cj.jdbc.Driver
+    username: cos
+    password: cos1234
     url: jdbc:mysql://localhost:3306/security?serverTimezone=Asia/Seoul
 
   jpa:
     hibernate:
-      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      ddl-auto: update
     show-sql: true
