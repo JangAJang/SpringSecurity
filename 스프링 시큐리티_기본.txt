@@ -88,4 +88,8 @@ antMatchers("/user/**").authenticated()를 예시로 들면, user로 들어가�
 이렇게 하기 위해 우리는 PrincipalDetials라는 클래스를 만들고 여기에 implement UserDetails를 해준다. 그래야 우리가 사용하는 UserDetails관련 함수들을 클래스 내에서 사용할 수 있다. 그리고, 이 implement를 사용하기 위해 기본적으로 override해주어야 하는 함수들을 넣어준다. 
 
 이 클래스는 기본적으로 User 라는 객체에 대해서 관리가 이루어진다. 이를 private로 불러올 필요가 있다. 또한 이 클래스의 생성자를 만들어, user를 입력받아 이를 private User형 변수에 넣어준다. 
-이제 PrincipalDetails안에 있는 함수들을 살펴봐야 한다. 처음에 override된 함수를 보면 getAuthorities이다. 즉, 우리가 불러온 user의 PrincipalDetails중에 authorities를 가져온다고 말로 만들 수 있다. 개인적으로 코딩을 공부하며, 이렇게 하나의 이야기로 정리해서 생각하는 것이 더 편했던 것 같다. 
+이제 PrincipalDetails안에 있는 함수들을 살펴봐야 한다. 처음에 override된 함수를 보면 getAuthorities이다. 즉, 우리가 불러온 user의 PrincipalDetails중에 authorities를 가져온다고 말로 만들 수 있다. 개인적으로 코딩을 공부하며, 이렇게 하나의 이야기로 정리해서 생각하는 것이 더 편했던 것 같다. 이는 user의 role이지만, 함수의 리턴 타입이 일반 문자열이 아니다. Colletion<>의 타입으로 리턴을 해주어야 하는데, 이를 위해 Collection<GrantedAuthority>형 변수를 선언한다. 이를 new ArrayList로 만들어준다. ArrayList로 만들어주었기에, 여기에 user의 role을 add해주면 된다. add안에 new GrantedAuthority를 오버라이드한다.
+보통 IntelliJ를 쓰면 그 안에 getAuthority 함수가 String타입으로 만들어져있다. 여기에 return user.getRole()를 해주면 이 문자열을 가지는 GrantedAuthority가 새로 생기고, 이 GrantedAuthority를 Collection에 넣어 리턴시키는 것이다. 
+이렇게 권환확인을 끝낼 수 있으며, 그 아래에는 get~으로 되어있는 함수와 is~로 이루어진 함수가 있다. get함수는 return을 전부 user.get으로 해당 값을 리턴하면 된다. 그 아래에 있는 is~를 하나씩 설명해보자면, 게정 만기여부, 계정 잠김여부, 계정 패스워드 만기여부, 사용가능 여부인데 전부다 return true로 바꾸어준다. 이렇게 해야 만기되지 않고 잠기지도 않았으며 사용 가능한 계정으로 만들어줄 수 있다. 
+
+이렇게 PrincipalDetails를 만들었는데, 이 UserDetails를 이용한 서비스를 만들어야한다. PrincipalDetails implements UserDetails였다면, PrincipalDetailService implements UserDetialsService로 해서 기본적으로 만들어져있는 UserDetails를 이용한 UserDetailsService를 implements한다. 이때 필요한 함수들도 바로 Override한다. 
