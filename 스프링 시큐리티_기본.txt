@@ -1,5 +1,5 @@
 기본적인 시큐리티 프로그램 연습을 하기 위해 start.spring.io를 들어가 세팅을 해야한다. 
-Dependencies에 Spring Web, Spring Boot DevTools, Lombok, Mysql Driver, Spring Security, Mustache, Spring Data JPA를 사용했다. 
+Dependencies에 Spring Web, Spring Boot DevTools, Lombok, Mysql Driver, Spring Security, Mustache, OAuth2 client, Spring Data JPA를 사용했다. 
 
 application.properties -> application.yml
 application파일은 프로그램을 실행시키고, 웹의 요청과 응답등 모든 과정에서 항상 적용되는 부분이다. 
@@ -101,3 +101,13 @@ antMatchers("/user/**").authenticated()를 예시로 들면, user로 들어가�
 
 레포지토리로 와서 public으로 findByUsername함수를 만들어준다. 이 때 함수의 리턴값은 User로 한다. 그래야 UserDetailsService에서 아까 만든 User형 변수에 넣을 수 있기 때문이다. 이 함수의 세부적인 내용은 써 줄 필요가 없는데, 이는 우리가 extend한 JpaRepository가 findByUsername이라는 함수를 넣어주면 JPA query를 실행시켜주기 때문이다. 이 쿼리문이 알아서 데이터베이스에서 select문을 수행해 정보를 찾아준다. 
 이렇게 레포지토리에서 검색을 하게 해주고 나서 이전에 만지던 loadUserByUsername을 마저 만들어준다. 이제 아까 만들었던 부분의 에러가 사라짐을 알 수 있다. findByUsername을 받은 User형 변수가 만약 null이라면 입력 username에 해당하는 사용자 계정이 없다는 뜻이며, null이 아니라면 사용자가 존재한다는 것이다. 만약 사용자가 존재한다면 이를 PrincipalDetails에 담아서 리턴해준다. 
+
+이제 권한 처리에 관해서 몇가지 조정을 할 것이다. SecurityConfig에 EnableGlobalMethodSecurity(secureEnabled=true)를 어노테이션으로 넣어준다. 어떤 변화가 있는지는 컨트롤러를 통해 알 수 있다. 컨트롤러에서 주소를 입력받으면 어떻게 처리할지를 컨트롤 할 수 있다. 이 함수들에 Secured어노테이션을 넣어, 특정 권한에서만 작동되게 할 수 있다. 이러한 각 개체의 시큐리티를 설정할 수 있게 해주는 것이다. 
+
+권한처리 및 기본적인 사이트 내의 로그인, 회원가입을 만들었다. 다음으론 구글로 로그인하기를 만들어볼 것이다. 이를 위해 구글 api를 만든다. 이후 api 서비스 중에서 oAuth동의 화면을 만들어야 한다. 애플리케이션 이름 등록 후 저장을 하면 자동으로 만들어진다. 
+다음으론 사용자 인증정보를 들어가, 여기에 oAuth 클라이언트 ID 만들기를 진행한다. 웹 애플리케이션으로 만들면 되며, 이름은 편한대로 설정하면 된다. 아래에 승인된 리디렉션 URI를 설정해주어야 하는데, 여기에 http://localhost:(주소값)/login/oauth2/code/google로 적는다. 이 주소는 지금 사용하는 oAuth2 클라이언트를 사용한다면, 고정된 주소값이다. 이 때 컨트롤러는 불필요하다. 구글에서 지정된 주소상에서 요청을 수행하기 때문이다. 이렇게 하면 클라이언트 아이디와 비밀번호를 준다. 이 값은 후에 스프링부트에서 사용해야 하므로 따로 메모해둔다. 
+
+구글 api를 만들었으면 이를 등록해주어야 한다. 처음에 만든 application.yml로 들어간다. 우리가 만드는 부분은 spring security의 부분이다. 그러므로, spring: security:의 구조로 들어갈 것이다. Spring:security:oauth2:client:registration:google로 들어가게 되는데, 내용상으로는 스프링의 기능 중 시큐리티를 설정할 것이다. 그 중에서 oauth2를 설정할 것이며, 클라이언트 등록을 하는데, 이 클라이언트는 구글 클라리언트(즉 구글 api)이다. 
+이제 google: 에 client-id와 client-secret를 아까 복사해두었던 값들을 넣어주면 된다. 여기서 끝은 아니다. 구글에서 우리가 받아오는 값이 무엇인지도 설정해야 한다. 사용자 모델을 보면, 아이디와 권한, 타임스탬프는 자동으로 생기는 값들이다. 또한, 비밀번호도 임의로 만들어서 가입시킨 후, 구글로 로그인 할 때 그 비밀번호를 알아서 가져오게 하면 되는 것이다. 그렇다면 필요한 것은 username과 email이다. 이에 맞는 값을 가져오기 위해 scope를 쓴다. Google:scope:의 구조로 들어간 후, -email과 -profile을 적어두면 된다. profile인 이유는 이 때엔 구글이 가지고 있는 폼에 맞게 가져와야 하기 때문이다. 
+
+구글 로그인을 위한 설정을 만들고, 이를 사용하기 위해선 html파일에 이 링크를 만들어야 한다. 로그인 창에 구글 로그인을 위한 a태그 하나를 만들고, 안에 href="/oauth2/authorization/google"을 넣어준다. 이 주소 또한 구글에서 정해준 주소이므로, 고정이다. 
