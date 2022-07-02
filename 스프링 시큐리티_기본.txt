@@ -116,7 +116,7 @@ antMatchers("/user/**").authenticated()를 예시로 들면, user로 들어가�
 이를 위해 SecurityConfig에 추가적으로 내용을 넣는다. 
 UserInfoEndpoint().userService()를 넣는다. 이 때 서비스 안에 들어가는 부분은 OAuth2UserService타입이어야 한다.
 하지만 이러한 타입의 객체를 만들지 않았으므로 null로 적어두고 이후에 수정할 것이다. 이제 객체를 만들어줄 것이다. 객체의 이름은 자유이지만, 결국 OAuth2UserService임을 알 수 있게 해주는 것이 좋다. 이후 클래스에 DefaultOAuth2UserService를 extend해준다. 
-서비스 객체이므로 당연하게 @Service를 넣어준다. 이 서비스 클래스를 Autowired로 SecurityConfig에서 호출해준 뒤 아까 만든 ㅜnull에 넣어준다. 
+서비스 객체이므로 당연하게 @Service를 넣어준다. 이 서비스 클래스를 Autowired로 SecurityConfig에서 호출해준 뒤 아까 만든 null에 넣어준다. 
 
 이 서비스 클래스의 역할을 알아야 한다. SecurityConfiguration에서 userInfoEndpoint.userService()함수를 넣었다. userInfoEndpoint는 OAuth2로그인 성공시 사용자 정보를 가져오며, userService는 OAuth2UserService의 구현체를 등록해주는 것이다. 즉, 가져온 사용자 정보를 가지고 추가적으로 처리를 하는 기능을 명명한 것이다.
 그러면 그 기능을 구현해야 한다. 이 때 loadUser이라는 함수를 Override해서 후처리를 시켜줄 수 있다. 함수를 불러오면 입력으로 OAuth2UserRequest가 있다. 이게 뭘 가지고 있는지 알아야 할 필요가 있다. ClientRegistration, AccessToken, Attribute가 있다. ClientRegistration
