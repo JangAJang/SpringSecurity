@@ -111,3 +111,12 @@ antMatchers("/user/**").authenticated()를 예시로 들면, user로 들어가�
 이제 google: 에 client-id와 client-secret를 아까 복사해두었던 값들을 넣어주면 된다. 여기서 끝은 아니다. 구글에서 우리가 받아오는 값이 무엇인지도 설정해야 한다. 사용자 모델을 보면, 아이디와 권한, 타임스탬프는 자동으로 생기는 값들이다. 또한, 비밀번호도 임의로 만들어서 가입시킨 후, 구글로 로그인 할 때 그 비밀번호를 알아서 가져오게 하면 되는 것이다. 그렇다면 필요한 것은 username과 email이다. 이에 맞는 값을 가져오기 위해 scope를 쓴다. Google:scope:의 구조로 들어간 후, -email과 -profile을 적어두면 된다. profile인 이유는 이 때엔 구글이 가지고 있는 폼에 맞게 가져와야 하기 때문이다. 
 
 구글 로그인을 위한 설정을 만들고, 이를 사용하기 위해선 html파일에 이 링크를 만들어야 한다. 로그인 창에 구글 로그인을 위한 a태그 하나를 만들고, 안에 href="/oauth2/authorization/google"을 넣어준다. 이 주소 또한 구글에서 정해준 주소이므로, 고정이다. 
+
+이렇게하면 html을 통해 구글로 가서 구글에서 코드를 받아온다. 이 코드를 가지고 인증을 해야하며, 권한을 줘야한다. 이를 엑세스 토큰이라고 부른다. 그리고 사용자 정보를 가져와 저장시켜줘야 한다. 그래야 다음에 들어올 때에도 회원이 가지는 정보를 가지고 그대로 로그인 할 수 있다. 이렇게 가서 구글에서 로그인을 하면 액세스 토큰과 사용자 프로필 정보를 바로 받아온다. 
+이를 위해 SecurityConfig에 추가적으로 내용을 넣는다. 
+UserInfoEndpoint().userService()를 넣는다. 이 때 서비스 안에 들어가는 부분은 OAuth2UserService타입이어야 한다.
+하지만 이러한 타입의 객체를 만들지 않았으므로 null로 적어두고 이후에 수정할 것이다. 이제 객체를 만들어줄 것이다. 객체의 이름은 자유이지만, 결국 OAuth2UserService임을 알 수 있게 해주는 것이 좋다. 이후 클래스에 DefaultOAuth2UserService를 extend해준다. 
+서비스 객체이므로 당연하게 @Service를 넣어준다. 이 서비스 클래스를 Autowired로 SecurityConfig에서 호출해준 뒤 아까 만든 ㅜnull에 넣어준다. 
+
+이 서비스 클래스의 역할을 알아야 한다. SecurityConfiguration에서 userInfoEndpoint.userService()함수를 넣었다. userInfoEndpoint는 OAuth2로그인 성공시 사용자 정보를 가져오며, userService는 OAuth2UserService의 구현체를 등록해주는 것이다. 즉, 가져온 사용자 정보를 가지고 추가적으로 처리를 하는 기능을 명명한 것이다.
+그러면 그 기능을 구현해야 한다. 이 때 loadUser이라는 함수를 Override해서 후처리를 시켜줄 수 있다. 함수를 불러오면 입력으로 OAuth2UserRequest가 있다. 이게 뭘 가지고 있는지 알아야 할 필요가 있다. ClientRegistration, AccessToken, Attribute가 있다. ClientRegistration
