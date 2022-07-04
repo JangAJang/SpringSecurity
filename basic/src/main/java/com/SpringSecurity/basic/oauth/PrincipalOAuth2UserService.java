@@ -1,6 +1,9 @@
 package com.SpringSecurity.basic.oauth;
 
+import com.SpringSecurity.basic.auth.PrincipalDetails;
+import com.SpringSecurity.basic.model.User;
 import com.SpringSecurity.basic.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -11,16 +14,31 @@ import org.springframework.stereotype.Service;
 @Service
 public class PrincipalOAuth2UserService extends DefaultOAuth2UserService {
 
-    private UserRepository userRepository;
+    @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        
-
-        return super.loadUser(userRequest);
-
+        String provider = userRequest.getClientRegistration().getClientId();
+        String providerId = oAuth2User.getAttribute("sub");
+        String email = oAuth2User.getAttribute("email");
+        String username = provider+"_"+providerId;
+        String password = bCryptPasswordEncoder.encode("GeTiNtHeRe");
+        String role = "ROLE_USER";
+        User userEntity = userRepository.findByUsername(username);
+        if(userEntity == null){
+            userEntity = User.builder()
+                    .username(username)
+                    .password(password)
+                    .role(role)
+                    .provider(provider)
+                    .providerId(providerId)
+                    .email(email).build();
+            userRepository.save(userEntity);
+        }
+        return new PrincipalDetails(userEntity, oAuth2User.getAttributes());
     }
-
-
 }

@@ -1,5 +1,7 @@
 package com.SpringSecurity.basic.model;
 
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.Entity;
@@ -9,7 +11,9 @@ import javax.persistence.Id;
 import java.sql.Timestamp;
 
 @Entity
+@NoArgsConstructor
 public class User {
+
     public int getId() {
         return id;
     }
@@ -61,10 +65,23 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    private String provider;
+    private String providerId;
     private String username;
     private String password;
     private String email;
     private String role;
     @CreationTimestamp
     private Timestamp timestamp;
+
+    @Builder
+    public User(String provider, String providerId, String username, String password, String email, String role, Timestamp timestamp) {
+        this.provider = provider;
+        this.providerId = providerId;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+        this.timestamp = timestamp;
+    }
 }

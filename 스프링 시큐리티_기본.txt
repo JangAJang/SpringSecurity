@@ -123,3 +123,19 @@ UserInfoEndpoint().userService()를 넣는다. 이 때 서비스 안에 들어�
 여기서 문제는 사용자가 어느 플랫폼을 이용해 로그인했는지 알 수 없다. 이를 위해 User 모델에 provider라는 문자열 변수를 하나 추가해준다. 이를 이용해 구글로 로그인 같은 OAuth요청이 들어오면 강제 회원가입을 시켜 이 회원가입된 정보를 로그인할때 자동으로 불러오게 하는 것이다. 이를 적용시키기 위해서 applications.yml에 있는 ddl-auto를 create로 바꾼뒤 한번 실행해준다. 그래야 이 변경점이 db에 적용된다. 
 
 이제 위에서 언급한 자동 회원가입을 구현해줘야 한다. OAuth2UserService 클래스의 loadUser함수가 Override되어있다. 이 함수는 처음에 엑세스 토큰을 가진 UserRequest가 오면 이를 다시 loadUser함수를 이용해 호출해 회원프로필을 받아올 수 있는 것이다. 이 받아온 정보들을 이용해 강제 회원가입을 진행하는 것이다. 이를 위해 loadUser함수 안에 loadUser된 프로필을 담는 OAuth2User타입의 변수를 만든다. 여기에 super.loadUser(userRequest)를 담는다. 만약 계정이 존재한다면 로그인처리를 바로 하면 되고, 존재하지 않는다면 회원가입을 진행한다. 
+
+로그인이 제대로 되고, 데이터가 제대로 주고받아지는지 확인해 볼 필요가 있다. 이를 위해 컨트롤러에서 테스트를 하나 만들었다. 로그인을 할 땐 정보를 확인하고, 이게 적합하다면 세션을 사용자에게 준다. 사용자는 Authentication을 반환한다. 그러므로, 웹의 입장에선 Authentication가 입력으로 존재한다. 이를 받는 함수로 만든 후, 이 객체에 무엇이 있는지 볼 것이다. 기본 로그인 방식에선 Authentication 객체는 이 때 UserDetails타입이 들어간다. 이를 테스트로 출력해보면 아무 이상 없이 데이터가 온 것을 확인 할 수 있다. 또한 UserDetails타입은 @AuthenticationPrincipal 어노테이션으로 이용할 수 있다. 그런데, PrincipalDetails에 이미 UserDetails가 implement되어있어 UserDetails 대신 PrincipalDetails를 이용할 수 있다.
+
+하지만 문제가 있다. 이 주소를 OAuth로그인을 한 상태에서 가면 실행이 제대로 되지 않는다. 이유는 OAuth로그인을 하면 OAuth2User타입으로 Authentication에 들어간다. 그러므로 PrincipalDetails타입의 변수가 들어온게 없기에 에러가 나는 것이다. 그렇다고 Oauth2로그인을 할 때 모든 것을 따로 만드는 것은 컨트롤러를 더욱 복잡하게 만든다. 
+구조를 생각해보면 해결책이 나온다. UserDetails라는 원래 있는 클래스를 PrincipalDetails에 implement했다. 그렇다면 동일하게 OAuth2User를 implement하고, 이 클래스에 맞는 함수들을 조정해주면 되는 것이다. 그랬을 때,UserDetails 또는 OAuth2User가 들어왔을 때 이를 PrincipalDetails가 알맞게 받아가고 이를 컨트롤러에서 하나로 사용할 수 있게 되는 것이다. 
+
+PrincipalDetails에 OAuth2User가 implement되면 두개의 함수가 자동으로 오버라이드 된다. getAttributes와 getName이다. 이 때 getAttributes를 리턴하기 위해 PrincipalDetails에 Map<String, Object> attributes로 맵을 만든다. 특성들을 특성의 이름과 이름에 맞는 객체들을 맵으로 만든 것이다. 그 다음에 getName함수가 있는데, attributes.get("sub")를 OAuth2방식으로 로그인한 사용자의 id를 반환할 수 있다. 
+또한 현재 PrincipalDetails 생성자는 UserDetails타입에 맞게만 존재한다. 생성자를 하나 더 만들어 입력으로 User와 attributes을 같이 넣어 OAuth2User에 맞는 생성자를 만든다. 이제 로그인을 하면 OAuth2로그인을 해도 attributes에 저장을 해둘 수 있다. 
+
+로그인을 하려면 일단 회원가입을 완성시켜야 한다. 가입을 할 때 회원 정보를 모델에 넣어 레포지토리를 통해 저장하고, 로그인 할 때 이 정보를 확인하면 된다. 그러기 위해 OAuth2UserService가 extend된 클래스를 수정해주면 된다. 여기에 필요한 변수들은 provider, providerId, email, username, password, role이다. provider는 userRequest.getClientRegistration().getClientId를 하면 구글을 통한 OAuth2로그인시의 요청에 함꼐 들어있는 구글이라는 provider를 받을 수 있다. 나머지는 원래 있던 OAuth2User타입 변수에 속해있기에 여기서 불러오면 된다. role은 ROLE_USER로 직접 만들어주면 되며, password는 BCryptPasswordEncoder를 Autowired해서 사용하면 된다. 여기서 실행을 할 때 순환참조가 발생한다. BCryptPassWordEncoder가 SecurityConfig에 있으면 SecurityConfig에서 PrincipalOAuth2UserService를 참조하고, PrincipalOAuth2UserService는 BCryptPasswordEncoder를 참조하는데 이게 SecurityConfig에 있다. 그렇다면 계속 둘이 돌며 순환이 되므로, 이를 상위로 빼주면 된다. 그렇기에 이 위치를 BasicApplication으로 빼둔다. 
+이렇게 모델에 들어갈 변수들을 먼저 따로 만들어두고, 이를 이용해 회원가입대상자인지 로그인 대상자인지 구분해야 한다. 이를 위해 UserRepository를 Autowire한다. 이후 User타입으로 userRepository.findByUsername(username)한 값을 받아서 이게 null인지 확인한다. null이라면 회원가입대상이고, 아니면 로그인 대상자이다. 
+이후 User타입으로 객체를 생성해주기 위해 위에 있는 변수들로 User 생성자를 만든다. 어노테이션으로 @Builder를 넣어준다. 이를 통해 각 변수명(변수값)을 해서 입력을 편하게 할 수 있다. 마지막에 .build()를 하면 된다. UserRepository에 이 User타입 객체를 save해주면 된다. null이 아닌 로그인이라면 userEntity가 이미 값을 가지고 있으므로 추가적으로 작업할 것이 없다. 이렇게 PrincipalDetails에 맞게 OAuth2USer에 대한 후처리를 끝냈다면, return을 new PrincipalDetails(User타입 변수, OAuth2User.getAttributes())로 하면 된다. PrincipalDetails가 이미 OAuth2User 타입을 가지고 있기에 문제가 없다. 뒤에 OAuth2User.getAttributes()를 넣은 이유는, PrincipalDetails에 OAuth2에 맞는 생성자에 Map<String, Object>형 변수를 추가했기 때문이다. 이 Map형 변수가 attributes이기 때문에 받을 수 있다. 
+또한 User 모델에 @NoArgsConstructor을 만든다. 생성자가 없다는 에러를 방지할 수 있다.
+
+이렇게 해서 구글로그인, 일반 로그인 모두 PrincipalDetails로 담아서 하나로 사용할 수 있게 된다.  
+
